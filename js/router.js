@@ -1,6 +1,5 @@
 (function() {
-
-  // IE6 璺宠浆
+  // IE6 
   if (!+'\v1' && !('maxHeight' in document.body.style)) {
       window['FXL_IE6'] = 1;
       //if (window.location.hash !== '#ie6') return window.location.href = '/not-supported.html';
@@ -15,7 +14,7 @@
   };
 
   var map = [
-    [/^(.*\/js\/.*?)([^\/]*\.js)$/i, '$1__build/$2?t=201203133']
+    [/^(.*\/js\/.*?)([^\/]*\.js)$/i, '$1$2?t=201203133']
   ];
 
 
@@ -33,10 +32,10 @@
 
   seajs.config({
     alias: alias,
-    preload: [
+ /*   preload: [
       Function.prototype.bind ? '' : 'es5-safe',
       this.JSON ? '' : 'json'
-    ],
+    ],*/
     map: map,
     base: ''
   });
@@ -45,19 +44,18 @@
 
 
 define(function(require, exports) {
-
   exports.load = function(filename) {
-    filename.split(',').forEach(function(modName) {
-      require.async('./' + modName, function(mod) {
-        if (mod && mod.init) {
-          mod.init();
-        }
-      });
-    });
+		modNames = filename.split(',')
+		for(var i=0,len=modNames.length;i<len;i++){
+			 require.async('./' + modNames[i], function(mod) {
+			 	if (mod && mod.init) {
+			  		mod.init();
+			 	}
+			 })
+		}
   };
-
-  require.async('./head');
+/*  require.async('./head');
   require.async('./ga');
-
   if (window['FXL_IE6'])  require.async('./ie6');
+  */
 });
