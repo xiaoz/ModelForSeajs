@@ -1,10 +1,16 @@
 define(function(require, exports) {
-	var S = KISSY,DOM = S.DOM, Event = S.Event;
+	var S = KISSY,DOM = S.DOM, Event = S.Event;	doc = document;
 	var B = require('base');
-    require('switchable');
+   
+	console.log(B)
 	
+	msg = new B.Msg().setMsg('nihao');
+	msg.show()
+	
+	S.later(function(){msg.setMsg('大家好，这是第二次，').show()},5000,false);
+	msg.hide(5000);
     this.MarkList = {
-		msg : new B.util.Msg(),
+/*		msg : new B.util.Msg(),
 		dragDelegate1 : null,
 		deleApp: function(data,parent){
 			var startPosition = DOM.offset(parent);
@@ -120,9 +126,7 @@ define(function(require, exports) {
             });
 			proxy.attach(dragDelegate2);
 			  var p1;
-            /**
-             * 集中监听所有
-             */
+       
 			 dragDelegate2.on("dragstart", function(ev) {
                 var c = this;
                 p1 = c.get("dragNode").css("position");
@@ -131,10 +135,7 @@ define(function(require, exports) {
             });
             dragDelegate2.on("drag", function(ev) {
                 var c = this;
-                /**
-                 * node 和 dragNode 区别：
-                 * node : 可能是 proxy node, 指实际拖放节点
-                 */
+             
 				c.get("node").offset(ev);
 				
             });
@@ -212,9 +213,7 @@ define(function(require, exports) {
 			                selector:'.component1'
 			            });
 			             var p;
-			            /**
-			             * 集中监听所有
-			             */
+			         
 			             H.dashboard.dragDelegate1.on("dragstart", function(ev) {
 			                var c = this;
 			                p = c.get("dragNode").css("position");
@@ -222,10 +221,6 @@ define(function(require, exports) {
 			            });
 			             H.dashboard.dragDelegate1.on("drag", function(ev) {
 			                var c = this;
-			                /**
-			                 * node 和 dragNode 区别：
-			                 * node : 可能是 proxy node, 指实际拖放节点
-			                 */
 							c.get("node").offset(ev);
 			            });
 			             H.dashboard.dragDelegate1.on("dragend", function(ev) {
@@ -386,7 +381,7 @@ define(function(require, exports) {
             })
 			
 			
-		}		
+		}	*/	
 		
 	};
    
