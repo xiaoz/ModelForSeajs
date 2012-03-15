@@ -8,14 +8,20 @@
   }
 
   var alias = {
-  'json': 'json/1.0.1/json',
-  'jquery': 'jquery/1.6.4/jquery'
+  'base': 'base',
+  'switchable':'components/switchable-min'
   
   };
-
+ 
   var map = [
-    [/^(.*\/js\/.*?)([^\/]*\.js)$/i, '$1$2?t=201203133']
+    [/^(.*\/js\/.*?)([^\/]*\.js)$/i, 'C:/Documents and Settings/Administrator/.ssh/Model/js/__build/$2?t=20120314']
   ];
+
+/*   
+$1 表示 base 路径 $2 表示js文件
+var map = [
+    [/^(.*\/js\/.*?)([^\/]*\.js)$/i, '$1__build/$2?t=20120314']
+  ];*/
 
 
   if (seajs.debug) {
@@ -37,7 +43,8 @@
       this.JSON ? '' : 'json'
     ],*/
     map: map,
-    base: ''
+    base: 'http://promo.huanleguang.cn/js/hlg/model',
+	preload: ['plugin-json']
   });
 
 })();
@@ -47,14 +54,14 @@ define(function(require, exports) {
   exports.load = function(filename) {
 		modNames = filename.split(',')
 		for(var i=0,len=modNames.length;i<len;i++){
-			 require.async('./' + modNames[i], function(mod) {
+			 require.async('./'+modNames[i], function(mod) {
 			 	if (mod && mod.init) {
 			  		mod.init();
 			 	}
 			 })
 		}
   };
-/*  require.async('./head');
+ /* require.async('./head');
   require.async('./ga');
   if (window['FXL_IE6'])  require.async('./ie6');
   */
