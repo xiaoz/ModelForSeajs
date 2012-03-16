@@ -5,10 +5,8 @@ define(function(require, exports) {
 	console.log(B)
 	
 	msg = new B.Msg().setMsg('nihao');
-	msg.show()
 	
-	S.later(function(){msg.setMsg('大家好，这是第二次，').show()},5000,false);
-	msg.hide(5000);
+	
     this.MarkList = {
 /*		msg : new B.util.Msg(),
 		dragDelegate1 : null,

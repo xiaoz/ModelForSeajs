@@ -5,7 +5,6 @@ define(function(require, exports, module) {
   this.util = {
 	    /*** 版本号*/
 		version: '1.0',
-
 		/*页面跳转*/
 		setLocation: function(url)  {
 			window.location.href = url;
@@ -55,11 +54,216 @@ define(function(require, exports, module) {
                 }
             }
             return this;
+		},
+		/*复制功能*/
+		clipboard: function(el,contain){
+			Event.on(el,'click',function(ev){
+				var copy = DOM.val(contain);
+				if (window.clipboardData){
+					 window.clipboardData.clearData();
+					 window.clipboardData.setData("Text", copy);
+					 var str = '已成功复制';
+					 alert(str)
+				}else if (window.netscape){
+						 try{
+								netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+							}catch(e){
+								alert("您的firefox安全限制限制您进行剪贴板操作，请打开'about:config'将signed.applets.codebase_principal_support'设置为true'之后重试，相对路径为firefox根目录/greprefs/all.js");
+								return false;
+							}
+						//netscape.security.PrivilegeManager.enablePrivilege('UniversalXPConnect');
+						var clip = Components.classes['@mozilla.org/widget/clipboard;1'].createInstance(Components.interfaces.nsIClipboard);
+						if (!clip) return;
+						var trans = Components.classes['@mozilla.org/widget/transferable;1'].createInstance(Components.interfaces.nsITransferable);
+						if (!trans) return;
+						trans.addDataFlavor('text/unicode');
+						var str = new Object();
+						var len = new Object();
+						var str = Components.classes["@mozilla.org/supports-string;1"].createInstance(Components.interfaces.nsISupportsString);
+						var copytext=copy;
+						str.data=copytext;
+						trans.setTransferData("text/unicode",str,copytext.length*2);
+						var clipid=Components.interfaces.nsIClipboard;
+						if (!clip) return false;
+						clip.setData(trans,null,clipid.kGlobalClipboard);
+						 var str = '已成功复制';
+						 alert(str)		
+					}else if(KISSY.UA.core == 'webkit'){
+						 var str = '该浏览器暂不支持，请用 Ctrl+c 复制';
+						alert(str)
+					}
+				return false;
+			})
+		},
+		//将日期 2011-6-27 10:22:30 格式 转为  Date 
+		StringToDate: function(DateStr) {
+			 if(typeof DateStr=="undefined")
+				 return new Date();
+			 if(typeof DateStr=="date")
+				 return DateStr;
+			 var converted = Date.parse(DateStr);
+			 var myDate = new Date(converted);
+			 if(isNaN(myDate)){
+				 DateStr=DateStr.replace(/:/g,"-");
+				 DateStr=DateStr.replace(" ","-");
+				 DateStr=DateStr.replace(".","-");
+				 var arys= DateStr.split('-');
+				 switch(arys.length){
+				 	case 7 : 
+					 	myDate = new Date(arys[0],--arys[1],arys[2],arys[3],arys[4],arys[5],arys[6]);
+				        break;
+				 	case 6 : 
+					 	myDate = new Date(arys[0],--arys[1],arys[2],arys[3],arys[4],arys[5]);
+					 	break;
+					default: 
+						myDate = new Date(arys[0],--arys[1],arys[2]);
+						break;
+				};
+			 };
+			 return myDate;
+		},
+		/*格式化数字*/
+		FormatNumber: function(srcStr,nAfterDot){
+			var srcStr,nAfterDot;
+			var resultStr,nTen;
+			srcStr = ""+srcStr+"";
+			strLen = srcStr.length;
+			dotPos = srcStr.indexOf(".",0);
+			if (dotPos == -1){
+				resultStr = srcStr+".";
+				for (i=0;i<nAfterDot;i++){
+					resultStr = resultStr+"0";
+			}
+			return resultStr;
+			}
+			else{
+			if ((strLen - dotPos - 1) >= nAfterDot){
+			nAfter = dotPos + nAfterDot + 1;
+			nTen =1;
+			for(j=0;j<nAfterDot;j++){
+			nTen = nTen*10;
+			}
+			resultStr = Math.ceil(parseFloat(srcStr)*nTen)/nTen;
+			return resultStr;
+			}
+			else{
+			resultStr = srcStr;
+			for (i=0;i<(nAfterDot - strLen + dotPos + 1);i++){
+			resultStr = resultStr+"0";
+			}
+			return resultStr;
+			}
+			}
+		},
+		/*URL验证*/
+		checkUrl : function(v){
+			var result = [];
+			var error = false;
+			var msg = null;
+			var reUrl = /(http|ftp|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?/ ;
+			if(!reUrl.test(v)){
+					error = true;
+					msg = '非法URl地址！';
+			}
+			result.push(error);
+			result.push(msg);
+			return result;
+		},
+		/*折扣验证*/
+		checkDiscount : function(v){
+			var result = [];
+			var error = false;
+			var msg = null;
+			if(isNaN(Number(v)) || v <= 0 || v >=10){
+				error = true;
+				msg = '折扣范围在 0.00~9.99之间哦！';
+			}else {
+				var re = /(^[0-9]([.][0-9]{1,2})?$)|(^1[0-9]([.][0-9]{1,2})?$)|(^2[0-3]([.][0-9]{1,2})?$)|(^10([.]0{1,2})?$)/;
+				if(!re.test(v)){
+					error = true;
+					msg = '折扣范围在 0.00~9.99之间哦！';
+				}
+			}
+			result.push(error);
+			result.push(msg);
+			return result;
+		},
+		/*价格判断*/
+		checkPrice : function(v){
+			var result = [];
+			var error = false;
+			var msg = null;
+			if (isNaN(Number(v)) == true || v<=0) {
+				error = true;
+				msg = '价格是数字哦！';
+			}
+			result.push(error);
+			result.push(msg);
+			return result;
+		},
+		/*是否为空*/
+		isNull : function(str){
+			var result = [];
+			var error = false;
+			var msg = null;
+			if(str == null ||str == ""){
+				error = true;
+				msg = '请填写，此项不能为空！';
+			}
+			result.push(error);
+			result.push(msg);
+			return result;
+			
+		},
+		/*验证活动名称*/
+		checkPromoName : function(promoName){
+			var result = [];
+			var error = false;
+			var msg = null;
+			var re=/^[\u4E00-\u9FA5\uf900-\ufa2d\A-Za-z0-9]{2,5}$/;
+			if(!re.test(promoName)){
+				if(promoName.length<2 || promoName.length >5){
+					error = true;
+					msg = '长度2~5个字符！';
+				}else {
+					var reg=/[^\u4E00-\u9FA5\uf900-\ufa2d\A-Za-z0-9]+/;
+					var rt = promoName.match(reg);
+					if(rt != null){
+						error = true;
+						msg = '含有非法字符'+rt[0]+'！';
+					}
+				}
+			}
+			result.push(error);
+			result.push(msg);
+			return result;
+		},
+		/*违禁词限制*/
+		checkSpecTitle : function(str){
+			var result = [];
+			var error = false;
+			var msg = null;
+			var re =/(淘宝)|(聚划算)|(限时折扣)|(良品)|(淘金币)|(天天特价)|(满就送)|(vip)/i;
+			if(re.test(str)){
+			    var rt = re.exec(str);
+			    if(rt != null){
+					error = true;
+					msg = '含有违禁字'+rt[0]+'！';
+				}
+			}
+			result.push(error);
+			result.push(msg);
+			return result;
 		}
+		
 
   };
-  
- 
+								  /****************************************
+									  ***								***
+									  ***		常用 组件	：消息，异步，分页	***
+									  ***		倒计时，上下滚动等			***
+									  ***								***
+									  ***************************************/
 		/**
 		 *Msg 简易消息提示
 		 *  new msg = H.util.Msg();  
@@ -70,7 +274,7 @@ define(function(require, exports, module) {
 		 * 		 show(id)  特定容器里 显示消息  
 		 *		 showDialog() 简易对话					
 		 */
-		exports.Msg = function() {
+		Msg = function() {
 			var self = this; 
 			if (!(self instanceof Msg)) { 
 				return new Msg(); 
@@ -81,9 +285,9 @@ define(function(require, exports, module) {
 			this.header = "错误提示";
 			this.footer ='';
 			this.el;
+			this.status = 'msg'; 
 		}
 		S.mix(Msg.prototype, {
-		
 			/* 
 			 * 设置消息
 			 * @param value {String} 消息内容
@@ -115,7 +319,7 @@ define(function(require, exports, module) {
 			 },
 			show :function(id){
 				var self = this;
-				if(el == undefined){
+				if(id == undefined){
 					var node = document.createElement("div");
 						node.innerHTML = '<div class="messages-prompt"><div class="fbloader"><img  src=" http://img.huanleguang.com/hlg//fbloader.gif" width="16" height="11" /></div>'
 										+'<div>'+self.msg +'</div>'
@@ -123,7 +327,7 @@ define(function(require, exports, module) {
 					if(!this.popup){
 						this.popup = new KISSY.Popup({
 							elStyle:{
-								position:UA.ie == 6 ? "absolute" : "fixed",
+								position:KISSY.UA.ie == 6 ? "absolute" : "fixed",
 								background:"transparent"
 							},
 							align: {
@@ -132,9 +336,10 @@ define(function(require, exports, module) {
 							effect: {
 								effect:"fade",
 								duration:0.5
-							}
+							},
+							mask: true
 						});
-						if (UA.ie == 6) {
+						if (KISSY.UA.ie == 6) {
 							Event.on(window, "scroll", function() {
 								if (popup.get("visible"))
 									popup.center();
@@ -142,6 +347,7 @@ define(function(require, exports, module) {
 						}
 					}					
 					this.popup.set("content", node);
+					this.status = 'msg'; 
 					this.popup.show();
 				}else{
 					DOM.show(DOM.html(id,this.msg));
@@ -151,6 +357,7 @@ define(function(require, exports, module) {
 				var self = this;
 				if(!this.dialog){
 					this.dialog = new KISSY.Dialog({
+						elCls:'ks-dialog',
 						width: 400,
 						bodyStyle:{
 							
@@ -168,26 +375,36 @@ define(function(require, exports, module) {
 						}
 					});
 				}
-				this.dialog.setHeader(self.header);
-				this.dialog.setBody(self.msg);
-				this.dialog.setFooter(self.footer);
+				this.dialog.set("headerContent", self.header);
+				this.dialog.set("bodyContent", self.msg);
+				this.dialog.set("footerContent", self.footer);
+				this.status = 'dialog'; 
 				this.dialog.show();
+			},
+			hide: function(delay){
+				var self = this;
+				if(delay == undefined){
+					delay = 0;
+				}
+				
+				if(self.status == 'msg'){
+					S.later(function(popup){popup.hide()},delay,false,null,this.popup);
+					
+				}else if(self.status == 'dialog'){
+					S.later(function(dialog){dialog.hide()},delay,false,null,this.dialog)
+				}else{
+					S.later(function(popup,dialog){popup.hide();dialog.hide()},delay,false,null,[this.popup,this.dialog]);	
+				}	
 			}
 	});
-	  /* * 存放组件等* */
-  this.widget = {
-	    /*** 版本号*/
-		version: '1.0'
-		
-  };    
-	
-  return  this.util	
-/*
-H.add('widget~asyncRequest', function(HLG) {
-	var S = KISSY, DOM = S.DOM, Event = S.Event, doc = document;
-	
+	 
+		/**
+		 *asyncRequest 异步
+		 *  new asyncRequest = asyncRequest(url);  
+		 * @param:	url地址
+		 *	用法：new asyncRequest().setURI(url).setMethod("GET").setHandle(sucessHandle).setErrorHandle(errorHandle).setData(data).send();	 			
+		 */
 	function asyncRequest(uri) {
-
     	var self = this; 
         if (!(self instanceof asyncRequest)) { 
             return new asyncRequest(uri); 
@@ -204,17 +421,13 @@ H.add('widget~asyncRequest', function(HLG) {
         }
       
     };
-	
-	S.mix(asyncRequest.prototype,{
-		
+	S.mix(asyncRequest.prototype,{	
 		handleSuccess: function() {
 			return undefined;
 		},
-
         handleFailure: function(o) {
            alert(o.desc);
         },
-		
         mapRes: function() {
             var links = document.getElemenHLGByTagName("link");
             var scripHLG = document.getElemenHLGByTagName("script");
@@ -229,21 +442,17 @@ H.add('widget~asyncRequest', function(HLG) {
                 }
             }
         },
-		
 		setMethod: function(m) {
             this.method = m.toString().toUpperCase();
             return this;
         },
-		
         getMethod: function() {
             return this.method;
         },
-		
         setData: function(obj) {
         	this.data = obj;
             return this;
         },
-		
         getData: function() {
             return this.data;
         },
@@ -251,7 +460,6 @@ H.add('widget~asyncRequest', function(HLG) {
         	this.form = form;
             return this;
         },
-		
         getForm: function() {
             return this.form;
         },
@@ -259,31 +467,25 @@ H.add('widget~asyncRequest', function(HLG) {
             this.uri = uri;
             return this;
         },
-		
         getURI: function() {
             return this.uri.toString();
         },
-        
         setDataType: function(datatype) {
             this.dataType = datatype;
             return this;
         },
-		
         getDataType: function() {
             return this.dataType;
         },
-		
         setHandle: function(fn) {
         	this.handleSuccess = fn;
             return this;
         },
-		
         setErrorHandle: function(fn) {
         	this.handleFailure = fn;
             return this;
         },
         dispatchResponse: function(o,b) {
-
         	b.handleSuccess(o);
             var onload = o.onload;
             if (onload) {
@@ -302,9 +504,8 @@ H.add('widget~asyncRequest', function(HLG) {
             this.bootloadable = true;
             return this;
         },
-        
         dispatchErrorResponse: function(o) {
-        	new H.util.Msg().setMsg('与服务器交互出错，请检查网络是否连接正常').show();
+        	new Msg().setMsg('与服务器交互出错，请检查网络是否连接正常').show();
         	S.later(function(){window.history.back(-1);},10000,false,null,null);
         	//S.later(function(){window.history.back(-1);},3000,false,null,null);
         },
@@ -315,7 +516,6 @@ H.add('widget~asyncRequest', function(HLG) {
                 self.data = null;
             }
         	var ajax = this;
-        	
         	interpretResponse = function(data, textStatus, xhr,ajax) {
         		var self = ajax;
         		if (data.ajaxExpired!=null) {
@@ -341,7 +541,7 @@ H.add('widget~asyncRequest', function(HLG) {
 	            } else {
 	                fn()
 	            }
-				*//*
+				*/
 				fn();
         	};
             S.ajax({
@@ -354,19 +554,20 @@ H.add('widget~asyncRequest', function(HLG) {
             	},
 				error:this.dispatchErrorResponse,
 			    dataType:self.dataType
-				
 			});
 			
         }
 	});
-	H.widget.asyncRequest = asyncRequest;
-});
-
-  //分页 组件
-H.add('widget~showPages', function( HLG ) { 
-  
-	var S = KISSY, DOM = S.DOM, Event = S.Event, doc = document;
-  
+	/**
+		 *showPages 分页
+		 *  new showPages = showPages(name);  
+		 * @param:	pageCount 总页数
+		 * @param:	handlePagination 点击后执行的函数
+		 * @param:	name 名称
+		 * @param:	contain 显示容器
+		 * @param:	mode 分页的模式 目前 有 3钟，可自定义加入 
+		 *	用法：paginator = new showPages(name).setRender(handlePagination).setPageCount(pageCount).printHtml(contain,mode);
+		 */
 	function showPages(name) { //初始化属性 
 		var self = this; 
         if (!(self instanceof showPages)) { 
@@ -556,8 +757,7 @@ H.add('widget~showPages', function( HLG ) {
 			
             self.jump(turnTo,flag,'');
 			  
-		},
-			  
+		},	  
         //显示html代码
 	    printHtml: function(contian, mode) {  
 			this.checkPages();
@@ -587,19 +787,17 @@ H.add('widget~showPages', function( HLG ) {
 		setPage:function(page){
 		    this.page = page;  
 		    return this; 
-	    }   	   
-
-		  	   
+	    }   	    	   
 	});
-
-	H.widget.showPages = showPages;
-});
-
- //循环倒计时
-H.add('widget~countdown', function( HLG ) { 
-  
-	var S = KISSY, DOM = S.DOM, Event = S.Event, doc = document;
-
+	/**
+		 *countdown 倒计时
+		 *  new countdown = countdown(contain, endTime, mode);  
+		 * @param:	endTime 剩余时间
+		 * @param:	contain 显示容器
+		 * @param:	mode 倒计时的模式 目前 有 3钟，可自定义加入
+		 * @method: setRender 倒计时结束 执行的函数 用于循环倒计时
+		 *	用法：countdown = new countdown('#PromoCountDown',startTime,3);;
+		 */
 	function countdown(contain, endTime, mode) { //初始化属性 
 		var self = this; 
         if (!(self instanceof countdown)) { 
@@ -625,8 +823,7 @@ H.add('widget~countdown', function( HLG ) {
 			if(mode == 3){
 				//  时 分 秒分 
 				DOM.html(DOM.get(contain),'<span class="hour"><b>0</b><b>0</b></span><span class="min"><b>0</b><b>0</b></span><span class="sec"><b>0</b><b>0</b></span>');
-			} 
-					   
+			} 		   
             var fresh = function(data) {
             	var nowtime = new Date(), endtime = data;
 				var leftsecond = parseInt((endtime.getTime() - nowtime.getTime()) / 1000);
@@ -687,28 +884,19 @@ H.add('widget~countdown', function( HLG ) {
 		endDo : function(){
 			var self = this;
 			self.timer.cancel();	
-		}
-	
-				  	   
+		}		  	   
 	});
-
-	H.widget.countdown = countdown;
-});
-
-
-//上下左右无缝滚动
-H.add('widget~roll', function( HLG ) { 
-  
-	/*结构
-	<div id="demo">
-		<div id="demo1">
- 			<div></div>
-  			<div></div>
-		</div>
-		<div id="demo2"></div>
-	</div>
-	*	/
-
+	
+	/**
+		 * roll 滚动
+		 *  new roll = roll(ccontain, mode,speed);               结构 :	<div id="demo">
+		 * @param:	mode 目前支持 向上 和向下     							  	<div id="demo1">
+		 * @param:	contain 显示容器										    	<div></div>
+		 * @param:	speed 滚动速度												<div></div>
+		 * @method: 														</div>
+		 *	用法：roll = new roll(contain, mode,speed) ;						<div id="demo2"></div></div>
+		 */
+	
 	function roll(contain, mode,speed) { 
 		//初始化属性 
 		var LEFT = "left", RIGHT = "right", UP = "up", DOWN = "down";
@@ -725,10 +913,8 @@ H.add('widget~roll', function( HLG ) {
 		this.tab2 = child[1];
 	   self.init(mode);	 
     }
-	
 	S.mix(roll.prototype,{
 		init: function(mode) {
-			
  	    	var self = this;   
             if (mode == '' || typeof(mode) == 'undefined') mode = UP;
 			switch(mode){
@@ -749,10 +935,8 @@ H.add('widget~roll', function( HLG ) {
 						} else {
 						    self.timer = S.later(MarqueeUp,self.speed,true,null,null);
 						}
-						
 					});
-					break;
-					
+					break;	
 				case DOWN: 
 					DOM.html(self.tab2,DOM.html(self.tab1));
 					self.tab.scrollTop=self.tab.scrollHeight;
@@ -770,7 +954,6 @@ H.add('widget~roll', function( HLG ) {
 						} else {
 						    self.timer = S.later(MarqueeDown,self.speed,true,null,null);
 						}
-						
 					});
 					break;
 					
@@ -783,15 +966,19 @@ H.add('widget~roll', function( HLG ) {
 			}
 		}
 	});
-
-	H.widget.roll = roll;
-});
-
-
-	  
-	  
-   }; */
-  
- 
-  
+	
+	  /* * 存放组件等* */
+  this.widget = {
+	    /*** 版本号*/
+		version: '1.0'
+		
+  };    
+  return {
+    util: this.util	,
+    Msg: Msg,
+	asyncRequest: asyncRequest,
+	showPages: showPages,
+	countdown: countdown,
+	roll: roll
+  };
 });

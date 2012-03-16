@@ -5,7 +5,6 @@ define(function(require, exports, module) {
   this.util = {
 	    /*** 版本号*/
 		version: '1.0',
-
 		/*页面跳转*/
 		setLocation: function(url)  {
 			window.location.href = url;
@@ -55,9 +54,63 @@ define(function(require, exports, module) {
                 }
             }
             return this;
+		},
+		/*复制功能*/
+		clipboard: function(el,contain){
+			Event.on(el,'click',function(ev){
+				var copy = DOM.val(contain);
+				if (window.clipboardData){
+					 window.clipboardData.clearData();
+					 window.clipboardData.setData("Text", copy);
+					 var str = '已成功复制';
+					 alert(str)
+				}else if (window.netscape){
+						 try{
+								netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+							}catch(e){
+								alert("您的firefox安全限制限制您进行剪贴板操作，请打开'about:config'将signed.applets.codebase_principal_support'设置为true'之后重试，相对路径为firefox根目录/greprefs/all.js");
+								return false;
+							}
+						//netscape.security.PrivilegeManager.enablePrivilege('UniversalXPConnect');
+						var clip = Components.classes['@mozilla.org/widget/clipboard;1'].createInstance(Components.interfaces.nsIClipboard);
+						if (!clip) return;
+						var trans = Components.classes['@mozilla.org/widget/transferable;1'].createInstance(Components.interfaces.nsITransferable);
+						if (!trans) return;
+						trans.addDataFlavor('text/unicode');
+						var str = new Object();
+						var len = new Object();
+						var str = Components.classes["@mozilla.org/supports-string;1"].createInstance(Components.interfaces.nsISupportsString);
+						var copytext=copy;
+						str.data=copytext;
+						trans.setTransferData("text/unicode",str,copytext.length*2);
+						var clipid=Components.interfaces.nsIClipboard;
+						if (!clip) return false;
+						clip.setData(trans,null,clipid.kGlobalClipboard);
+						 var str = '已成功复制';
+						 alert(str)		
+					}else if(KISSY.UA.core == 'webkit'){
+						 var str = '该浏览器暂不支持，请用 Ctrl+c 复制';
+						alert(str)
+					}
+				return false;
+			})
 		}
+		
+		
+		
+		
+		
+		
+		
+		
 
   };
+								  /****************************************
+									  ***								***
+									  ***		常用 组件	：消息，异步，分页	***
+									  ***		倒计时，上下滚动等			***
+									  ***								***
+									  ***************************************/
 		/**
 		 *Msg 简易消息提示
 		 *  new msg = H.util.Msg();  
@@ -82,7 +135,6 @@ define(function(require, exports, module) {
 			this.status = 'msg'; 
 		}
 		S.mix(Msg.prototype, {
-		
 			/* 
 			 * 设置消息
 			 * @param value {String} 消息内容
@@ -131,7 +183,8 @@ define(function(require, exports, module) {
 							effect: {
 								effect:"fade",
 								duration:0.5
-							}
+							},
+							mask: true
 						});
 						if (KISSY.UA.ie == 6) {
 							Event.on(window, "scroll", function() {
@@ -151,6 +204,7 @@ define(function(require, exports, module) {
 				var self = this;
 				if(!this.dialog){
 					this.dialog = new KISSY.Dialog({
+						elCls:'ks-dialog',
 						width: 400,
 						bodyStyle:{
 							
@@ -168,44 +222,36 @@ define(function(require, exports, module) {
 						}
 					});
 				}
-				this.dialog.setHeader(self.header);
-				this.dialog.setBody(self.msg);
-				this.dialog.setFooter(self.footer);
+				this.dialog.set("headerContent", self.header);
+				this.dialog.set("bodyContent", self.msg);
+				this.dialog.set("footerContent", self.footer);
 				this.status = 'dialog'; 
 				this.dialog.show();
 			},
 			hide: function(delay){
 				var self = this;
 				if(delay == undefined){
-					delay = '100';
+					delay = 0;
 				}
+				
 				if(self.status == 'msg'){
-					S.later(function(){this.dialog.hide()},delay,false);
+					S.later(function(popup){popup.hide()},delay,false,null,this.popup);
+					
 				}else if(self.status == 'dialog'){
-					S.later(function(){this.popup.hide()},delay,false)
+					S.later(function(dialog){dialog.hide()},delay,false,null,this.dialog)
 				}else{
-					S.later(function(){this.dialog.hide()},delay,false);
-					S.later(function(){this.popup.hide()},delay,false)
+					S.later(function(popup,dialog){popup.hide();dialog.hide()},delay,false,null,[this.popup,this.dialog]);	
 				}	
 			}
 	});
-	
-	  /* * 存放组件等* */
-  this.widget = {
-	    /*** 版本号*/
-		version: '1.0'
-		
-  };    
-	return {
-    util: this.util	,
-    Msg:  Msg
-  };
-/*
-H.add('widget~asyncRequest', function(HLG) {
-	var S = KISSY, DOM = S.DOM, Event = S.Event, doc = document;
-	
+	 
+		/**
+		 *asyncRequest 异步
+		 *  new asyncRequest = asyncRequest(url);  
+		 * @param:	url地址
+		 *	用法：new asyncRequest().setURI(url).setMethod("GET").setHandle(sucessHandle).setErrorHandle(errorHandle).setData(data).send();	 			
+		 */
 	function asyncRequest(uri) {
-
     	var self = this; 
         if (!(self instanceof asyncRequest)) { 
             return new asyncRequest(uri); 
@@ -222,17 +268,13 @@ H.add('widget~asyncRequest', function(HLG) {
         }
       
     };
-	
-	S.mix(asyncRequest.prototype,{
-		
+	S.mix(asyncRequest.prototype,{	
 		handleSuccess: function() {
 			return undefined;
 		},
-
         handleFailure: function(o) {
            alert(o.desc);
         },
-		
         mapRes: function() {
             var links = document.getElemenHLGByTagName("link");
             var scripHLG = document.getElemenHLGByTagName("script");
@@ -247,21 +289,17 @@ H.add('widget~asyncRequest', function(HLG) {
                 }
             }
         },
-		
 		setMethod: function(m) {
             this.method = m.toString().toUpperCase();
             return this;
         },
-		
         getMethod: function() {
             return this.method;
         },
-		
         setData: function(obj) {
         	this.data = obj;
             return this;
         },
-		
         getData: function() {
             return this.data;
         },
@@ -269,7 +307,6 @@ H.add('widget~asyncRequest', function(HLG) {
         	this.form = form;
             return this;
         },
-		
         getForm: function() {
             return this.form;
         },
@@ -277,31 +314,25 @@ H.add('widget~asyncRequest', function(HLG) {
             this.uri = uri;
             return this;
         },
-		
         getURI: function() {
             return this.uri.toString();
         },
-        
         setDataType: function(datatype) {
             this.dataType = datatype;
             return this;
         },
-		
         getDataType: function() {
             return this.dataType;
         },
-		
         setHandle: function(fn) {
         	this.handleSuccess = fn;
             return this;
         },
-		
         setErrorHandle: function(fn) {
         	this.handleFailure = fn;
             return this;
         },
         dispatchResponse: function(o,b) {
-
         	b.handleSuccess(o);
             var onload = o.onload;
             if (onload) {
@@ -320,9 +351,8 @@ H.add('widget~asyncRequest', function(HLG) {
             this.bootloadable = true;
             return this;
         },
-        
         dispatchErrorResponse: function(o) {
-        	new H.util.Msg().setMsg('与服务器交互出错，请检查网络是否连接正常').show();
+        	new Msg().setMsg('与服务器交互出错，请检查网络是否连接正常').show();
         	S.later(function(){window.history.back(-1);},10000,false,null,null);
         	//S.later(function(){window.history.back(-1);},3000,false,null,null);
         },
@@ -333,7 +363,6 @@ H.add('widget~asyncRequest', function(HLG) {
                 self.data = null;
             }
         	var ajax = this;
-        	
         	interpretResponse = function(data, textStatus, xhr,ajax) {
         		var self = ajax;
         		if (data.ajaxExpired!=null) {
@@ -359,7 +388,7 @@ H.add('widget~asyncRequest', function(HLG) {
 	            } else {
 	                fn()
 	            }
-				*//*
+				*/
 				fn();
         	};
             S.ajax({
@@ -372,19 +401,20 @@ H.add('widget~asyncRequest', function(HLG) {
             	},
 				error:this.dispatchErrorResponse,
 			    dataType:self.dataType
-				
 			});
 			
         }
 	});
-	H.widget.asyncRequest = asyncRequest;
-});
-
-  //分页 组件
-H.add('widget~showPages', function( HLG ) { 
-  
-	var S = KISSY, DOM = S.DOM, Event = S.Event, doc = document;
-  
+	/**
+		 *showPages 分页
+		 *  new showPages = showPages(name);  
+		 * @param:	pageCount 总页数
+		 * @param:	handlePagination 点击后执行的函数
+		 * @param:	name 名称
+		 * @param:	contain 显示容器
+		 * @param:	mode 分页的模式 目前 有 3钟，可自定义加入 
+		 *	用法：paginator = new showPages(name).setRender(handlePagination).setPageCount(pageCount).printHtml(contain,mode);
+		 */
 	function showPages(name) { //初始化属性 
 		var self = this; 
         if (!(self instanceof showPages)) { 
@@ -574,8 +604,7 @@ H.add('widget~showPages', function( HLG ) {
 			
             self.jump(turnTo,flag,'');
 			  
-		},
-			  
+		},	  
         //显示html代码
 	    printHtml: function(contian, mode) {  
 			this.checkPages();
@@ -605,19 +634,17 @@ H.add('widget~showPages', function( HLG ) {
 		setPage:function(page){
 		    this.page = page;  
 		    return this; 
-	    }   	   
-
-		  	   
+	    }   	    	   
 	});
-
-	H.widget.showPages = showPages;
-});
-
- //循环倒计时
-H.add('widget~countdown', function( HLG ) { 
-  
-	var S = KISSY, DOM = S.DOM, Event = S.Event, doc = document;
-
+	/**
+		 *countdown 倒计时
+		 *  new countdown = countdown(contain, endTime, mode);  
+		 * @param:	endTime 剩余时间
+		 * @param:	contain 显示容器
+		 * @param:	mode 倒计时的模式 目前 有 3钟，可自定义加入
+		 * @method: setRender 倒计时结束 执行的函数 用于循环倒计时
+		 *	用法：countdown = new countdown('#PromoCountDown',startTime,3);;
+		 */
 	function countdown(contain, endTime, mode) { //初始化属性 
 		var self = this; 
         if (!(self instanceof countdown)) { 
@@ -643,8 +670,7 @@ H.add('widget~countdown', function( HLG ) {
 			if(mode == 3){
 				//  时 分 秒分 
 				DOM.html(DOM.get(contain),'<span class="hour"><b>0</b><b>0</b></span><span class="min"><b>0</b><b>0</b></span><span class="sec"><b>0</b><b>0</b></span>');
-			} 
-					   
+			} 		   
             var fresh = function(data) {
             	var nowtime = new Date(), endtime = data;
 				var leftsecond = parseInt((endtime.getTime() - nowtime.getTime()) / 1000);
@@ -705,28 +731,19 @@ H.add('widget~countdown', function( HLG ) {
 		endDo : function(){
 			var self = this;
 			self.timer.cancel();	
-		}
-	
-				  	   
+		}		  	   
 	});
-
-	H.widget.countdown = countdown;
-});
-
-
-//上下左右无缝滚动
-H.add('widget~roll', function( HLG ) { 
-  
-	/*结构
-	<div id="demo">
-		<div id="demo1">
- 			<div></div>
-  			<div></div>
-		</div>
-		<div id="demo2"></div>
-	</div>
-	*	/
-
+	
+	/**
+		 * roll 滚动
+		 *  new roll = roll(ccontain, mode,speed);               结构 :	<div id="demo">
+		 * @param:	mode 目前支持 向上 和向下     							  	<div id="demo1">
+		 * @param:	contain 显示容器										    	<div></div>
+		 * @param:	speed 滚动速度												<div></div>
+		 * @method: 														</div>
+		 *	用法：roll = new roll(contain, mode,speed) ;						<div id="demo2"></div></div>
+		 */
+	
 	function roll(contain, mode,speed) { 
 		//初始化属性 
 		var LEFT = "left", RIGHT = "right", UP = "up", DOWN = "down";
@@ -743,10 +760,8 @@ H.add('widget~roll', function( HLG ) {
 		this.tab2 = child[1];
 	   self.init(mode);	 
     }
-	
 	S.mix(roll.prototype,{
 		init: function(mode) {
-			
  	    	var self = this;   
             if (mode == '' || typeof(mode) == 'undefined') mode = UP;
 			switch(mode){
@@ -767,10 +782,8 @@ H.add('widget~roll', function( HLG ) {
 						} else {
 						    self.timer = S.later(MarqueeUp,self.speed,true,null,null);
 						}
-						
 					});
-					break;
-					
+					break;	
 				case DOWN: 
 					DOM.html(self.tab2,DOM.html(self.tab1));
 					self.tab.scrollTop=self.tab.scrollHeight;
@@ -788,7 +801,6 @@ H.add('widget~roll', function( HLG ) {
 						} else {
 						    self.timer = S.later(MarqueeDown,self.speed,true,null,null);
 						}
-						
 					});
 					break;
 					
@@ -801,15 +813,19 @@ H.add('widget~roll', function( HLG ) {
 			}
 		}
 	});
-
-	H.widget.roll = roll;
-});
-
-
-	  
-	  
-   }; */
-  
- 
-  
+	
+	  /* * 存放组件等* */
+  this.widget = {
+	    /*** 版本号*/
+		version: '1.0'
+		
+  };    
+  return {
+    util: this.util	,
+    Msg: Msg,
+	asyncRequest: asyncRequest,
+	showPages: showPages,
+	countdown: countdown,
+	roll: roll
+  };
 });

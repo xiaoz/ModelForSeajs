@@ -78,7 +78,7 @@
   };
  
   var map = [
-    [/^(.*\/js\/.*?)([^\/]*\.js)$/i, 'C:/Documents and Settings/Administrator/.ssh/Model/js/__build/$2?t=20120314']
+    [/^(.*\/js\/.*?)([^\/]*\.js)$/i, 'C:/Documents and Settings/Administrator/.ssh/Model/js/$2?t=20120314']
   ];
 
 /*   
